@@ -1,0 +1,176 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <ctype.h>
+
+int sudoku[9][9] = {
+    {4, 1, 0, 0, 6, 5, 0, 0, 7},
+    {0, 0, 6, 0, 0, 7, 4, 8, 0},
+    {2, 0, 7, 4, 9, 0, 0, 0, 6},
+    {0, 6, 0, 0, 7, 0, 1, 0, 0},
+    {3, 0, 1, 5, 0, 0, 0, 7, 2},
+    {0, 9, 0, 0, 4, 2, 3, 0, 8},
+    {1, 0, 8, 6, 0, 0, 0, 2, 9},
+    {0, 2, 0, 0, 1, 8, 6, 4, 0},
+    {6, 0, 0, 3, 0, 0, 0, 1, 0}
+};
+
+void printSudoku() { // print full grid
+    printf("     1  2  3   4  5  6   7  8  9  \n");
+    for (int row = 1; row <= 9; row++) {
+        if (row % 3 == 1) {
+            printf("   +---------+---------+---------+\n");
+        }
+        printf(" %d ", row);
+
+        for (int col = 1; col <= 9; col++) {
+            if (col % 3 == 1) {
+                printf("|");
+            }
+            printf(" %d ", sudoku[row - 1][col - 1]); // *(*(sudoku + row - 1) + col - 1))
+        }
+        printf("|\n");
+    }
+    printf("   +---------+---------+---------+\n");
+    return;
+}
+
+bool sudokuFull() { // check if grid is full
+    for (int i = 0; i < 9; i++) {
+        for(int j = 0; j < 9; j++) {
+            if (sudoku[i][j] == 0) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+void checkGrid() {
+    int row, col, pos;
+
+    for (row = 0; row < 9; row++) { // check each row
+        int vals[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        for (col = 0; col < 9; col++) {
+            int val = sudoku[row][col];
+            vals[val]++;
+        }
+
+        for (pos = 1; pos < 10; pos++) {
+            if (vals[pos] > 1) {
+                printf("Invalid grid");
+            }
+        }
+    }
+
+     for (col = 0; col < 9; col++) { // check each column
+        int vals[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        for (row = 0; row < 9; row++) {
+            int val = sudoku[row][col];
+            vals[val]++;
+        }
+
+        for (pos = 1; pos < 10; pos++) {
+            if (vals[pos] > 1) {
+                printf("Invalid grid");
+            }
+        }
+    }
+
+    for (int square = 0; square < 9; square++) { // check each square
+        int vals[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        for (row = 3 * (square / 3); row < 3; row++) {
+            for (col = 3 * (square % 3); col < 3; col++) {
+                int val = sudoku[row][col];
+                vals[val]++;
+            }
+        }
+
+        for (pos = 1; pos < 10; pos++) {
+            if (vals[pos] > 1) {
+                printf("Invalid grid");
+            }
+        }
+    }
+
+    return;
+}
+
+bool validInput(int currentRow, int currentCol, int val) { // check if input is already contained in row, column, or square
+    bool valid = true;
+
+    for (int col = 0; col < 9; col++) {
+        if (sudoku[currentRow][col] == val) {
+            printf("Invalid input: %d already exists in row %d\n", val, currentRow + 1);
+            valid = false;
+        }
+    }
+
+    for (int row = 0; row < 9; row++) {
+        if (sudoku[row][currentCol] == val) {
+            printf("Invalid input: %d already exists in column %d\n", val, currentCol + 1);
+            valid = false;
+        }
+    }
+
+    int square = 3 * (currentRow / 3) + currentCol / 3;
+    for (int row = 3 * (square / 3); row < 3; row++) {
+        for (int col = 3 * (square % 3); col < 3; col++) {
+            if (sudoku[row][col] == val) {
+                printf("Invalid input: %d already exists in square %d\n", val, square + 1);
+                valid = false;
+            }
+        }
+    }
+
+    return valid;
+}
+
+void updateSudoku(int row, int col, int val) {
+    if (validInput(row, col, val)) {
+        sudoku[row][col] = val;
+        printSudoku();
+    }
+}
+
+bool ReadIntInRange(int* p, int* q, int* r, const char* prompt, int low, int high) {
+    while(true) {
+        const int BUFFSIZE = 256;
+        char buf[BUFFSIZE]; // input
+        printf("%s: ", prompt);
+        if (fgets(buf, BUFFSIZE, stdin) == NULL) {
+            return false;      // almost certainly EOF
+        }
+        if (sscanf(buf, "%d %d %d", p, q, r) != 3) {
+            if (buf[0] == 'E') {
+                return false;
+            }
+            else {
+                printf("Input(s) not of type integer\n");
+            }
+        }
+        else if (*p < low || *p > high || *q < low || *q > high || *r < low || *r > high)  {
+            printf("Number(s) out of range\n");
+        }
+        else {
+            break;
+        }
+    }
+    return true;
+}
+
+int main()
+{
+    printf("Welcome to Sudoku, \"E\" to esc\n\n");
+
+    printSudoku(sudoku);
+
+    checkGrid();
+
+    int row, col, input;
+    while(!sudokuFull() && ReadIntInRange(&row, &col, &input, "Enter row col input", 1, 9)) {
+        updateSudoku(row - 1, col - 1, input);
+    }
+
+    return 0;
+}
