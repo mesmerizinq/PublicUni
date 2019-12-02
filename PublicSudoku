@@ -2,9 +2,10 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include <time.h>
 
 int sudoku[9][9] = {
-    {4, 1, 0, 0, 6, 5, 0, 0, 7},
+    {4, 1, 0, 0, 6, 5, 0, 0, 7}, // Reihe 0 für PC, Reihe 1 für Mensch
     {0, 0, 6, 0, 0, 7, 4, 8, 0},
     {2, 0, 7, 4, 9, 0, 0, 0, 6},
     {0, 6, 0, 0, 7, 0, 1, 0, 0},
@@ -58,7 +59,7 @@ void checkGrid() {
 
         for (pos = 1; pos < 10; pos++) {
             if (vals[pos] > 1) {
-                printf("Invalid grid");
+                printf("Invalid grid: Row %d, Val %d\n", row + 1, pos);
             }
         }
     }
@@ -72,7 +73,7 @@ void checkGrid() {
 
         for (pos = 1; pos < 10; pos++) {
             if (vals[pos] > 1) {
-                printf("Invalid grid");
+                printf("Invalid grid: Column %d, Val %d\n", col + 1, pos);
             }
         }
     }
@@ -88,7 +89,7 @@ void checkGrid() {
 
         for (pos = 1; pos < 10; pos++) {
             if (vals[pos] > 1) {
-                printf("Invalid grid");
+                printf("Invalid grid: Square %d, Val %d\n", square + 1, pos);
             }
         }
     }
@@ -114,8 +115,10 @@ bool validInput(int currentRow, int currentCol, int val) { // check if input is 
     }
 
     int square = 3 * (currentRow / 3) + currentCol / 3;
-    for (int row = 3 * (square / 3); row < 3; row++) {
-        for (int col = 3 * (square % 3); col < 3; col++) {
+    int rowBegin = currentRow = 3 * (square / 3);
+    int colBegin = currentCol = 3 * (square % 3);
+    for (int row = rowBegin; row < rowBegin + 3; row++) {
+        for (int col = colBegin; col < colBegin + 3; col++) {
             if (sudoku[row][col] == val) {
                 printf("Invalid input: %d already exists in square %d\n", val, square + 1);
                 valid = false;
@@ -163,14 +166,22 @@ int main()
 {
     printf("Welcome to Sudoku, \"E\" to esc\n\n");
 
-    printSudoku(sudoku);
-
     checkGrid();
+
+    printSudoku();
+
+    clock_t t;
+    t = clock();
 
     int row, col, input;
     while(!sudokuFull() && ReadIntInRange(&row, &col, &input, "Enter row col input", 1, 9)) {
         updateSudoku(row - 1, col - 1, input);
     }
+
+    t = clock() - t;
+    double timeTaken = ((double)t)/CLOCKS_PER_SEC;
+
+    printf("\nCongrats! You just wasted %f seconds of your life\n", timeTaken);
 
     return 0;
 }
