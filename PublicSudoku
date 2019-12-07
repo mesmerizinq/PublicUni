@@ -47,7 +47,8 @@ bool sudokuFull() { // check if grid is full
     return true;
 }
 
-void checkGrid() {
+bool checkGrid() {
+    bool valid = true;
     int row, col, pos;
 
     for (row = 0; row < 9; row++) { // check each row
@@ -60,6 +61,7 @@ void checkGrid() {
         for (pos = 1; pos < 10; pos++) {
             if (vals[pos] > 1) {
                 printf("Invalid grid: Row %d, Val %d\n", row + 1, pos);
+                valid = false;
             }
         }
     }
@@ -74,6 +76,7 @@ void checkGrid() {
         for (pos = 1; pos < 10; pos++) {
             if (vals[pos] > 1) {
                 printf("Invalid grid: Column %d, Val %d\n", col + 1, pos);
+                valid = false;
             }
         }
     }
@@ -90,11 +93,47 @@ void checkGrid() {
         for (pos = 1; pos < 10; pos++) {
             if (vals[pos] > 1) {
                 printf("Invalid grid: Square %d, Val %d\n", square + 1, pos);
+                valid = false;
             }
         }
     }
 
+    return valid;
+}
+
+int countLockedVals() { // count number of values in original grid
+    int count = 0;
+    for (int i = 0; i < 9; i++) {
+        for(int j = 0; j < 9; j++) {
+            if (sudoku[i][j] != 0) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+void addLockedVals(int lockedVals[]) { // fill array with the position of each locked value
+    int count = 0;
+    for (int i = 0; i < 9; i++) {
+        for(int j = 0; j < 9; j++) {
+            if (sudoku[i][j] != 0) {
+                lockedVals[count] = 9 * i + j;
+                count++;
+            }
+        }
+    }
     return;
+}
+
+bool inputLocked(int lockedVals[], int locked, int row, int col) { // check if given position conflicts with locked position
+    int pos = 9 * row + col;
+    for (int i = 0; i < locked; i++) {
+        if (lockedVals[i] == pos) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool validInput(int currentRow, int currentCol, int val) { // check if input is already contained in row, column, or square
@@ -129,14 +168,15 @@ bool validInput(int currentRow, int currentCol, int val) { // check if input is 
     return valid;
 }
 
-void updateSudoku(int row, int col, int val) {
+void updateSudoku(int row, int col, int val) { // change value at given position if valid
     if (validInput(row, col, val)) {
         sudoku[row][col] = val;
         printSudoku();
     }
+    return;
 }
 
-bool ReadIntInRange(int* p, int* q, int* r, const char* prompt, int low, int high) {
+bool ReadIntInRange(int* p, int* q, int* r, const char* prompt, int low, int high, int lockedVals[], const int locked) { // get and check user input
     while(true) {
         const int BUFFSIZE = 256;
         char buf[BUFFSIZE]; // input
@@ -155,6 +195,9 @@ bool ReadIntInRange(int* p, int* q, int* r, const char* prompt, int low, int hig
         else if (*p < low || *p > high || *q < low || *q > high || *r < low || *r > high)  {
             printf("Number(s) out of range\n");
         }
+        else if (inputLocked(lockedVals, locked, *p - 1, *q - 1)) {
+            printf("Value can't be changed at this position\n");
+        }
         else {
             break;
         }
@@ -166,7 +209,14 @@ int main()
 {
     printf("Welcome to Sudoku, \"E\" to esc\n\n");
 
-    checkGrid();
+    if(!checkGrid()) {
+        printSudoku();
+        return 0;
+    }
+
+    const int locked = countLockedVals();
+    int lockedVals[locked];
+    addLockedVals(lockedVals);
 
     printSudoku();
 
@@ -174,7 +224,7 @@ int main()
     t = clock();
 
     int row, col, input;
-    while(!sudokuFull() && ReadIntInRange(&row, &col, &input, "Enter row col input", 1, 9)) {
+    while(!sudokuFull() && ReadIntInRange(&row, &col, &input, "Enter row col input", 1, 9, lockedVals, locked)) {
         updateSudoku(row - 1, col - 1, input);
     }
 
